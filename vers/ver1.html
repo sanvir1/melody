@@ -77,6 +77,20 @@
       font-weight: bold;
       margin-left: 10px;
     }
+    .file-list {
+      margin-bottom: 20px;
+    }
+    .file-list-item {
+      cursor: pointer;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+    .file-list-item:hover {
+      background: #e9ecef;
+    }
   </style>
 </head>
 <body>
@@ -96,6 +110,14 @@
       </ol>
       <p><strong>Пример:</strong> <code>53 35 33 54321</code></p>
       <p><strong>Примечание:</strong> Длительность нот и пауз можно изменить с помощью ползунка. Настройки частот можно загрузить через JSON-файл.</p>
+    </div>
+    <!-- Список мелодий -->
+    <div class="file-list">
+      <h4>Список мелодий:</h4>
+      <div class="file-list-item" data-filename="melody1.txt">Мелодия 1</div>
+      <div class="file-list-item" data-filename="melody2.txt">Мелодия 2</div>
+      <div class="file-list-item" data-filename="melody3.txt">Мелодия 3</div>
+      <div class="file-list-item" data-filename="melody4.txt">Мелодия 4</div>
     </div>
     <!-- Ввод мелодии -->
     <div class="mb-3">
@@ -124,8 +146,6 @@
     <!-- Кнопки управления -->
     <div class="d-grid gap-2">
       <button class="btn btn-primary" id="playButton">🎵 Проиграть мелодию</button>
-      <button class="btn btn-danger" id="stopButton">⏹️ Остановить</button>
-      <button class="btn btn-success" id="exportButton">💾 Экспорт в MIDI</button>
     </div>
   </div>
   <!-- Tone.js -->
@@ -196,13 +216,6 @@
         }
       });
 
-      // Обработчик кнопки "Остановить"
-      document.getElementById("stopButton").addEventListener("click", () => {
-        synth.releaseAll(); // Останавливаем все активные ноты
-        isPlaying = false; // Сбрасываем флаг
-        console.log("Воспроизведение остановлено."); // Отладочное сообщение
-      });
-
       // Обработчик загрузки файла
       document.getElementById("fileInput").addEventListener("change", (event) => {
         const file = event.target.files[0];
@@ -254,48 +267,6 @@
         document.getElementById("fileInput").click();
       });
 
-      // Обработчик кнопки "Экспорт в MIDI"
-      document.getElementById("exportButton").addEventListener("click", () => {
-        const input = document.getElementById("melodyInput").value.trim();
-        if (!input) {
-          alert("Введите мелодию или загрузите файл.");
-          return;
-        }
-
-        const parsedMelody = parseMelody(input);
-
-        // Создаем MIDI-файл
-        const track = new MidiWriter.Track();
-
-        parsedMelody.forEach(({ frequency, duration }) => {
-          if (frequency) {
-            const midiNote = Math.round(69 + 12 * Math.log2(frequency / 440)); // Конвертируем частоту в MIDI-число
-            const ticks = Math.round(duration / noteDuration * 480); // Конвертируем длительность в тики
-            track.addEvent(new MidiWriter.NoteEvent({
-              pitch: [midiNote],
-              duration: `T${ticks}`
-            }));
-          } else {
-            // Добавляем паузу в MIDI
-            const ticks = Math.round(duration / noteDuration * 480);
-            track.addEvent(new MidiWriter.NoteEvent({
-              pitch: [],
-              duration: `T${ticks}`
-            }));
-          }
-        });
-
-        const write = new MidiWriter.Writer([track]);
-        const dataUri = write.dataUri();
-
-        // Создаем ссылку для скачивания
-        const link = document.createElement("a");
-        link.href = dataUri;
-        link.download = "melody.mid";
-        link.click();
-        console.log("MIDI-файл создан и скачан."); // Отладочное сообщение
-      });
-
       // Обработчик ползунка длительности
       const durationSlider = document.getElementById("durationSlider");
       const durationValue = document.getElementById("durationValue");
@@ -321,6 +292,26 @@
           };
           reader.readAsText(file);
         }
+      });
+
+      // Обработчик клика по элементам списка мелодий
+      document.querySelectorAll('.file-list-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const filename = item.getAttribute('data-filename');
+          fetch(filename)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Ошибка загрузки файла');
+              }
+              return response.text();
+            })
+            .then(data => {
+              document.getElementById("melodyInput").value = data;
+            })
+            .catch(error => {
+              alert(error.message);
+            });
+        });
       });
     });
   </script>
