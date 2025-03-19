@@ -63,6 +63,20 @@
       border-color: #0d6efd;
       background-color: #e9f2ff;
     }
+    .duration-slider {
+      margin-top: 20px;
+    }
+    .duration-slider label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    .duration-slider input[type="range"] {
+      width: 100%;
+    }
+    .duration-slider span {
+      font-weight: bold;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -75,18 +89,24 @@
       <ol>
         <li>Введите мелодию в поле ниже или загрузите текстовый файл.</li>
         <li>Используйте цифры для нот: <code>1 = C4, 2 = D4, 3 = E4, ...</code>.</li>
-        <li>Каждая нота имеет стандартную длительность (0.3 секунды).</li>
-        <li>Разделяйте ноты пробелами (например, <code>5 3 3 5 3 3 5 4 3 2 1</code>).</li>
+        <li>Разделяйте ноты без пробелов (например, <code>53353354321</code>).</li>
+        <li>Используйте ползунок для изменения длительности нот (от 0.1 до 2 секунд).</li>
         <li>Нажмите кнопку "Проиграть мелодию".</li>
       </ol>
-      <p><strong>Пример:</strong> <code>5 3 3 5 3 3 5 4 3 2 1</code></p>
-      <p><strong>Примечание:</strong> Длительность каждой ноты фиксирована и равна <code>0.3 секунды</code>. Если нужно изменить длительность, это можно сделать только в настройках программы.</p>
+      <p><strong>Пример:</strong> <code>53353354321</code></p>
+      <p><strong>Примечание:</strong> Длительность нот можно изменить с помощью ползунка.</p>
     </div>
 
     <!-- Ввод мелодии -->
     <div class="mb-3">
       <label for="melodyInput" class="form-label">Введите мелодию:</label>
-      <textarea class="form-control" id="melodyInput" placeholder="Пример: 5 3 3 5 3 3 5 4 3 2 1"></textarea>
+      <textarea class="form-control" id="melodyInput" placeholder="Пример: 53353354321"></textarea>
+    </div>
+
+    <!-- Ползунок длительности -->
+    <div class="duration-slider">
+      <label for="durationSlider">Длительность нот (сек): <span id="durationValue">0.3</span></label>
+      <input type="range" id="durationSlider" min="0.1" max="2" step="0.1" value="0.3">
     </div>
 
     <!-- Загрузка файла -->
@@ -130,14 +150,14 @@
         8: 523.25  // C5
       };
 
-      // Фиксированная длительность ноты
-      const defaultDuration = 0.3;
+      // Переменная для длительности нот
+      let noteDuration = 0.3; // По умолчанию 0.3 секунды
 
       // Функция для разбора строки мелодии
       function parseMelody(input) {
-        return input.trim().split(/\s+/).map(noteNumber => {
+        return input.trim().split("").map(noteNumber => {
           const frequency = noteFrequencies[noteNumber]; // Получаем частоту из настроек
-          return { frequency, duration: defaultDuration };
+          return { frequency, duration: noteDuration };
         });
       }
 
@@ -245,7 +265,7 @@
         parsedMelody.forEach(({ frequency, duration }) => {
           if (frequency) {
             const midiNote = Math.round(69 + 12 * Math.log2(frequency / 440)); // Конвертируем частоту в MIDI-число
-            const ticks = Math.round(duration / defaultDuration * 480); // Конвертируем длительность в тики
+            const ticks = Math.round(duration / noteDuration * 480); // Конвертируем длительность в тики
             track.addEvent(new MidiWriter.NoteEvent({
               pitch: [midiNote],
               duration: `T${ticks}`
@@ -262,6 +282,14 @@
         link.download = "melody.mid";
         link.click();
         console.log("MIDI-файл создан и скачан."); // Отладочное сообщение
+      });
+
+      // Обработчик ползунка длительности
+      const durationSlider = document.getElementById("durationSlider");
+      const durationValue = document.getElementById("durationValue");
+      durationSlider.addEventListener("input", () => {
+        noteDuration = parseFloat(durationSlider.value); // Обновляем длительность
+        durationValue.textContent = noteDuration.toFixed(1); // Отображаем значение
       });
     });
   </script>
