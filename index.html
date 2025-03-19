@@ -17,35 +17,20 @@
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">Список файлов</h1>
-        <ul id="file-list" class="list-group"></ul>
+        <ul id="file-list" class="list-group">
+            <!-- Статичный список файлов -->
+            <li class="list-group-item" style="cursor: pointer;" onclick="loadFile('file1.html')">file1.html</li>
+            <li class="list-group-item" style="cursor: pointer;" onclick="loadFile('file2.html')">file2.html</li>
+            <li class="list-group-item" style="cursor: pointer;" onclick="loadFile('file3.html')">file3.html</li>
+        </ul>
         <iframe id="file-frame" src="" frameborder="0"></iframe>
     </div>
 
     <script>
-        // Загрузка списка файлов
-        async function loadFiles() {
-            try {
-                const response = await fetch('/files');
-                const files = await response.json();
-
-                const fileList = document.getElementById('file-list');
-                files.forEach(file => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item';
-                    listItem.textContent = file;
-                    listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        document.getElementById('file-frame').src = `/vers/${file}`;
-                    });
-                    fileList.appendChild(listItem);
-                });
-            } catch (error) {
-                console.error('Ошибка при загрузке файлов:', error);
-            }
+        // Функция для загрузки файла во фрейм
+        function loadFile(filename) {
+            document.getElementById('file-frame').src = `vers/${filename}`;
         }
-
-        // Запуск загрузки при загрузке страницы
-        window.onload = loadFiles;
     </script>
 </body>
 </html>
