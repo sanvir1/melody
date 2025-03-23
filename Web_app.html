@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Простое веб-приложение</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 id="header">Измените цвет фона</h1>
+    <button class="btn btn-primary fade-in" onclick="changeColor()">Изменить цвет</button>
+    <button class="btn btn-success fade-in" onclick="showMessage()">Hello World</button>
+    <button class="btn btn-info fade-in" id="fullscreenButton" onclick="toggleFullscreen()">Вход в полноэкранный режим</button>
+
+    <h2>Ноты первой октавы</h2>
+    <button class="btn btn-warning fade-in" onclick="playSound('C')">До (C)</button>
+    <button class="btn btn-warning fade-in" onclick="playSound('D')">Ре (D)</button>
+    <button class="btn btn-warning fade-in" onclick="playSound('E')">Ми (E)</button>
+    <button class="btn btn-warning fade-in" onclick="playSound('F')">Фа (F)</button>
+    <button class="btn btn-warning fade-in" onclick="playSound('G')">Соль (G)</button>
+    <button class="btn btn-warning fade-in" onclick="playSound('A')">Ля (A)</button>
+    <button class="btn btn-warning fade-in" onclick="playSound('B')">Си (B)</button>
+
+    <script>
+        let currentSound = null;
+
+        function changeColor() {
+            const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+            document.body.style.backgroundColor = randomColor;
+            document.getElementById('header').innerText = `Цвет фона: ${randomColor}`;
+        }
+
+        function showMessage() {
+            alert("Hello World");
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Ошибка при попытке перейти в полноэкранный режим: ${err.message}`);
+                });
+                document.getElementById('fullscreenButton').innerText = "Выход из полноэкранного режима";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.getElementById('fullscreenButton').innerText = "Вход в полноэкранный режим";
+                }
+            }
+        }
+
+        function playSound(note) {
+            if (currentSound) {
+                currentSound.pause();
+                currentSound.currentTime = 0; // Сбросить время воспроизведения
+            }
+            currentSound = new Audio(`sounds/${note}.mp3`);
+            currentSound.play();
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
