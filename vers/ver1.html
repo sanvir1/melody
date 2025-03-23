@@ -77,19 +77,17 @@
       font-weight: bold;
       margin-left: 10px;
     }
-    .file-list {
-      margin-bottom: 20px;
+    .frequency-buttons {
+      margin-top: 20px;
     }
-    .file-list-item {
-      cursor: pointer;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin-bottom: 5px;
-      transition: background 0.3s;
+    .frequency-button {
+      font-size: 0.9rem; /* Уменьшаем размер шрифта */
+      padding: 5px; /* Уменьшаем отступы */
+      width: 90px; /* Устанавливаем ширину кнопки */
+      transition: transform 0.1s; /* Анимация при нажатии */
     }
-    .file-list-item:hover {
-      background: #e9ecef;
+    .frequency-button.pressed {
+      transform: scale(0.9); /* Уменьшаем размер кнопки при нажатии */
     }
   </style>
 </head>
@@ -111,14 +109,13 @@
       <p><strong>Пример:</strong> <code>53 35 33 54321</code></p>
       <p><strong>Примечание:</strong> Длительность нот и пауз можно изменить с помощью ползунка. Настройки частот можно загрузить через JSON-файл.</p>
     </div>
-    <!-- Список мелодий -->
-    <div class="file-list">
-      <h4>Список мелодий:</h4>
-      <div class="file-list-item" data-filename="melody1.txt">Мелодия 1</div>
-      <div class="file-list-item" data-filename="melody2.txt">Мелодия 2</div>
-      <div class="file-list-item" data-filename="melody3.txt">Мелодия 3</div>
-      <div class="file-list-item" data-filename="melody4.txt">Мелодия 4</div>
+
+    <!-- Кнопки частот -->
+    <div class="frequency-buttons">
+      <h4>Частоты нот:</h4>
+      <div id="frequencyButtonContainer" class="d-flex flex-wrap gap-2"></div>
     </div>
+
     <!-- Ввод мелодии -->
     <div class="mb-3">
       <label for="melodyInput" class="form-label">Введите мелодию:</label>
@@ -150,11 +147,10 @@
   </div>
   <!-- Tone.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-  <!-- MidiWriter.js -->
-  <script src="https://cdn.jsdelivr.net/npm/midi-writer-js@2.0.4/build/MidiWriter.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const synth = new Tone.Synth().toDestination(); // Создаем синтезатор
+      const melodySynth = new Tone.Synth().toDestination(); // Создаем синтезатор для мелодии
+      const frequencySynth = new Tone.Synth().toDestination(); // Создаем синтезатор для частот
       let melody = [];
       let isPlaying = false;
 
@@ -194,7 +190,7 @@
         let now = Tone.now();
         melody.forEach(({ frequency, duration }) => {
           if (frequency) {
-            synth.triggerAttackRelease(frequency, duration, now); // Играем ноту
+            melodySynth.triggerAttackRelease(frequency, duration, now); // Играем ноту с синтезатора для мелодии
           }
           now += duration; // Увеличиваем время для следующей ноты или паузы
         });
@@ -275,6 +271,36 @@
         durationValue.textContent = noteDuration.toFixed(1); // Отображаем значение
       });
 
+      // Функция для создания кнопок частот
+      function createFrequencyButtons() {
+        const frequencyButtonContainer = document.getElementById("frequencyButtonContainer");
+        frequencyButtonContainer.innerHTML = ''; // Очищаем предыдущие кнопки
+        Object.keys(noteFrequencies).forEach(key => {
+          const button = document.createElement("button");
+          button.className = "btn btn-outline-secondary frequency-button";
+          button.textContent = noteFrequencies[key]; // Устанавливаем частоту как текст кнопки
+
+          let isPressed = false; // Флаг для отслеживания состояния кнопки
+
+          button.addEventListener("mousedown", () => {
+            isPressed = !isPressed; // Переключаем состояние
+            button.classList.toggle("pressed"); // Добавляем/удаляем класс для анимации
+
+            if (isPressed) {
+              const frequency = noteFrequencies[key];
+              frequencySynth.triggerAttack(frequency); // Начинаем воспроизведение на синтезаторе частот
+            } else {
+              frequencySynth.triggerRelease(); // Останавливаем воспроизведение
+            }
+          });
+
+          frequencyButtonContainer.appendChild(button);
+        });
+      }
+
+      // Создаем кнопки частот при загрузке
+      createFrequencyButtons();
+
       // Обработчик загрузки файла настроек
       document.getElementById("settingsFileInput").addEventListener("change", (event) => {
         const file = event.target.files[0];
@@ -286,32 +312,15 @@
               noteFrequencies = settings; // Обновляем частоты нот
               console.log("Настройки успешно загружены:", noteFrequencies);
               alert("Настройки частот успешно применены!");
+
+              // Создаем кнопки для каждой частоты
+              createFrequencyButtons();
             } catch (error) {
               alert("Ошибка при чтении файла настроек. Убедитесь, что файл является корректным JSON.");
             }
           };
           reader.readAsText(file);
         }
-      });
-
-      // Обработчик клика по элементам списка мелодий
-      document.querySelectorAll('.file-list-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const filename = item.getAttribute('data-filename');
-          fetch(filename)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error('Ошибка загрузки файла');
-              }
-              return response.text();
-            })
-            .then(data => {
-              document.getElementById("melodyInput").value = data;
-            })
-            .catch(error => {
-              alert(error.message);
-            });
-        });
       });
     });
   </script>
