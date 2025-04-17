@@ -117,7 +117,7 @@
       <h4>Частоты нот:</h4>
       <div id="frequencyButtonContainer" class="d-flex flex-wrap gap-2"></div>
     </div>
-    <!-- Ввод мелодии -->
+    <!-- Ввод мелодии 1 -->
     <div class="mb-3">
       <label for="fileInput1" class="btn btn-secondary">🎵 Загрузить мелодию 1</label>
       <input type="file" class="form-control d-none" id="fileInput1" accept=".txt">      
@@ -126,6 +126,7 @@
       <label for="melodyInput1" class="form-label">Введите мелодию 1:</label>
       <textarea class="form-control" id="melodyInput1" placeholder="Пример: 53 35 33 54321"></textarea>
     </div>
+    <!-- Ввод мелодии 2 -->
     <div class="mb-4">
       <label for="fileInput2" class="btn btn-secondary">🎵 Загрузить мелодию 2</label>
       <input type="file" class="form-control d-none" id="fileInput2" accept=".txt">      
@@ -134,6 +135,7 @@
       <label for="melodyInput2" class="form-label">Введите мелодию 2:</label>
       <textarea class="form-control" id="melodyInput2" placeholder="Пример: 53 35 33 54321"></textarea>
     </div>
+    <!-- Ввод мелодии 3 -->
     <div class="mb-5">
       <label for="fileInput3" class="btn btn-secondary">🎵 Загрузить мелодию 3</label>
       <input type="file" class="form-control d-none" id="fileInput3" accept=".txt">      
@@ -147,18 +149,14 @@
       <label for="durationSlider">Длительность нот и пауз (сек): <span id="durationValue">0.3</span></label>
       <input type="range" id="durationSlider" min="0.1" max="2" step="0.1" value="0.3">
     </div>
-    <!-- Загрузка файла, Перетаскивание файла -->
-    <div class="drop-area" id="dropArea">
-      <input type="file" class="form-control d-none" id="fileInput" accept=".txt">
-      <p>Перетащите файл сюда или кликните для выбора</p>
-    </div>
     <!-- Кнопки управления -->
     <div class="d-grid gap-2">
       <button class="btn btn-primary" id="playButton_all">🎵 Проиграть все мелодии одновременно</button>
+      <button class="btn btn-danger" id="stopButton_all">⏹️ Остановить все мелодии</button>
     </div>
+    <!-- Canvas для визуализации -->
+    <canvas id="visualizerCanvas" width="400" height="200"></canvas>
   </div>
-  <!-- Добавлен <canvas> для визуализации -->
-  <canvas id="visualizerCanvas" width="400" height="200"></canvas>
   <!-- Tone.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <script>
@@ -191,15 +189,20 @@
 
       // Функция для разбора строки мелодии
       function parseMelody(input) {
-        return input.trim().split("").map(noteNumber => {
-          if (noteNumber === " ") {
-            // Пробел означает паузу (частота равна null)
-            return { frequency: null, duration: noteDuration };
-          } else {
-            const frequency = noteFrequencies[noteNumber]; // Получаем частоту из настроек
-            return { frequency, duration: noteDuration };
-          }
-        });
+        try {
+          return input.trim().split("").map(noteNumber => {
+            if (noteNumber === " ") {
+              // Пробел означает паузу (частота равна null)
+              return { frequency: null, duration: noteDuration };
+            } else {
+              const frequency = noteFrequencies[noteNumber]; // Получаем частоту из настроек
+              return { frequency, duration: noteDuration };
+            }
+          });
+        } catch (error) {
+          console.error("Ошибка при разборе мелодии:", error);
+          return []; // Вернуть пустой массив в случае ошибки
+        }
       }
 
       // Функция для воспроизведения одной мелодии
@@ -209,10 +212,7 @@
         let now = Tone.now();
         melody.forEach(({ frequency, duration }) => {
           if (frequency) {
-            melodySynths[index].triggerAttackRelease(frequency, duration); // Играем ноту с синтезатора
-          } else {
-            // Для пауз просто ждём
-            Tone.Transport.schedule(time => {}, now);
+            melodySynths[index].triggerAttackRelease(frequency, duration, now); // Играем ноту с синтезатора
           }
           now += duration; // Увеличиваем время для следующей ноты или паузы
         });
