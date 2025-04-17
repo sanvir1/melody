@@ -277,26 +277,6 @@
       }
       // Создаем кнопки частот при загрузке
       createFrequencyButtons();
-      // Обработчик загрузки файла настроек
-      document.getElementById("settingsFileInput").addEventListener("change", (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const settings = JSON.parse(e.target.result);
-              noteFrequencies = settings; // Обновляем частоты нот
-              console.log("Настройки успешно загружены:", noteFrequencies);
-              alert("Настройки частот успешно применены!");
-              // Создаем кнопки для каждой частоты
-              createFrequencyButtons();
-            } catch (error) {
-              alert("Ошибка при чтении файла настроек. Убедитесь, что файл является корректным JSON.");
-            }
-          };
-          reader.readAsText(file);
-        }
-      });
     });
   </script>
 </body>
